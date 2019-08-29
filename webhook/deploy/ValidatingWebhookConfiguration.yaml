@@ -1,0 +1,23 @@
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  namespace: {{ namespace }}
+  name: {{ webhook_config_name }}
+  labels:
+    app: {{ webhook_label }}
+webhooks:
+  - name: {{ webhook_config_name }}.{{ redis_node_pod_host_suffix }}
+    timeoutSeconds: 3
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [ "*" ]
+        apiVersions: [ "v1" ]
+        operations: [ "DELETE" ]
+        resources: [ "pods" ]
+    clientConfig:
+      service:
+        path: /delete-redis-node
+        namespace: {{ namespace }}
+        name: {{ webhook_service }}
+      caBundle: "{{ webhook_crt }}"

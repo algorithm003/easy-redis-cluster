@@ -1,0 +1,22 @@
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ redis_node_hpa_name }}
+  namespace: {{ namespace }}
+  labels:
+    app: {{ redis_node_label }}
+spec:
+  minReplicas: {{ redis_node_min_pod_replicas }}
+  maxReplicas: {{ redis_node_max_pod_replicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: {{ redis_node_name }}
+  metrics:
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Value
+          averageValue: "{{ redis_node_average_value }}Mi"

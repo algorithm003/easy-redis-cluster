@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ namespace }}
+  name: {{ redis_node_cm_conf_name }}
+  labels:
+    app: {{ redis_node_label }}
+data:
+  {{ redis_node_redis_conf_filename }}: |
+    cluster-enabled yes
+    cluster-node-timeout 10000
+    cluster-require-full-coverage no
+    cluster-migration-barrier 1
+    cluster-config-file {{ redis_node_cluster_config_filename }}
+
+    protected-mode no
+
+    appendonly yes
+    appendfsync everysec
+
+    maxmemory {{ redis_node_maxmemory }}mb
+    maxmemory-policy volatile-lru
+    replica-ignore-maxmemory yes
+
+    save 900 1
+    save 300 10
+    save 60 10000
+
+    lazyfree-lazy-eviction yes
+    lazyfree-lazy-expire yes
+    lazyfree-lazy-server-del yes
+    replica-lazy-flush yes

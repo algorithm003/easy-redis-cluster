@@ -1,0 +1,126 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: {{ namespace }}
+  name: {{ redis_node_name }}
+  labels:
+    app: {{ redis_node_label }}
+spec:
+  replicas: {{ redis_node_min_pod_replicas }}
+  serviceName: {{ redis_node_service }}
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: {{ redis_node_label }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ redis_node_pvc_name }}
+        labels:
+          app: {{ redis_node_label }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ redis_node_storage }}Mi
+  template:
+    metadata:
+      labels:
+        app: {{ redis_node_label }}
+    spec:
+      volumes:
+        - name: {{ redis_node_vol_conf_name }}
+          configMap:
+            name: {{ redis_node_cm_conf_name }}
+            defaultMode: 0755
+        - name: {{ redis_node_vol_sh_name }}
+          configMap:
+            name: {{ redis_node_cm_sh_name }}
+            defaultMode: 0755
+      containers:
+      - name: {{ redis_node_name }}
+        image: {{ redis_node_image }}
+        imagePullPolicy: IfNotPresent
+        command: ["redis-server", "/{{ redis_node_vol_conf_name }}/{{ redis_node_redis_conf_filename }}"]
+        volumeMounts:
+          - name: {{ redis_node_vol_conf_name }}
+            mountPath: /{{ redis_node_vol_conf_name }}
+            readOnly: true
+          - name: {{ redis_node_vol_sh_name }}
+            mountPath: /{{ redis_node_vol_sh_name }}
+            readOnly: true
+          - name: {{ redis_node_pvc_name }}
+            mountPath: /data
+            readOnly: false
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - sh
+                - -c
+                - "/{{ redis_node_vol_sh_name }}/{{ redis_node_post_start_sh_filename }}"
+        ports:
+        - name: client
+          containerPort: {{ redis_node_client_port }}
+        - name: gossip
+          containerPort: {{ redis_node_gossip_port }}
+        resources:
+          requests:
+            memory: "{{ redis_node_requests_memory }}Mi"
+          limits:
+            memory: "{{ redis_node_limits_memory }}Mi"
+        readinessProbe:
+          initialDelaySeconds: 3
+          periodSeconds: 2
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 1
+          exec:
+            command:
+              - sh
+              - -c
+              - "cat {{ redis_node_readiness_filename }}"
+        livenessProbe:
+          initialDelaySeconds: 1
+          periodSeconds: 1
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          exec:
+            command:
+              - sh
+              - -c
+              - "redis-cli ping"
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: REDIS_NODE_POD_HOST_END_PART
+            value: "{{ redis_node_pod_host_end_part }}"
+          - name: REDIS_NODE_CLIENT_PORT
+            value: "{{ redis_node_client_port }}"
+          - name: REDIS_NODE_MIN_POD_REPLICAS
+            value: "{{ redis_node_min_pod_replicas }}"
+          - name: REDIS_NODE_READINESS_FILENAME
+            value: "{{ redis_node_readiness_filename }}"
+          - name: REDIS_NODE_KEY_COUNT
+            value: "{{ redis_node_key_count }}"
+          - name: REDIS_CLUSTER_MIN_POD_REPLICAS
+            value: "{{ redis_cluster_min_pod_replicas }}"
+          - name: REDIS_NODE_KEY_NAMESPACE
+            value: "{{ redis_node_key_namespace }}"
+          - name: REDIS_NODE_SH_LOG_FILENAME
+            value: "{{ redis_node_sh_log_filename }}"
+          - name: REDIS_NODE_CLUSTER_CONFIG_FILENAME
+            value: "{{ redis_node_cluster_config_filename }}"
+          - name: REDIS_NODE_VOL_SH_NAME
+            value: "{{ redis_node_vol_sh_name }}"
+          - name: REDIS_NODE_FIX_IP_SH_FILENAME
+            value: "{{ redis_node_fix_ip_sh_filename }}"
+          - name: REDIS_NODE_CLUSTER_OP_SH_FILENAME
+            value: "{{ redis_node_cluster_op_sh_filename }}"

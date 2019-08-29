@@ -1,0 +1,66 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ namespace }}
+  name: {{ webhook_name }}
+  labels:
+    app: {{ webhook_label }}
+spec:
+  replicas: {{ webhook_pod_replicas }}
+  selector:
+    matchLabels:
+      app: {{ webhook_label }}
+  template:
+    metadata:
+      name: {{ webhook_name }}
+      labels:
+        app: {{ webhook_label }}
+    spec:
+      volumes:
+        - name: {{ webhook_vol_tls_name }}
+          secret:
+            secretName: {{ webhook_secret_tls_name }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      containers:
+        - name: {{ webhook_name }}
+          image: {{ webhook_image }}
+          imagePullPolicy: IfNotPresent
+          command: []
+          ports:
+          - name: https
+            containerPort: {{ webhook_port }}
+          securityContext:
+            privileged: false
+          volumeMounts:
+            - name: {{ webhook_vol_tls_name }}
+              mountPath: /{{ webhook_vol_tls_name }}
+              readOnly: true
+          env:
+            - name: WEBHOOK_PORT
+              value: "{{ webhook_port }}"
+            - name: WEBHOOK_VOL_TLS_NAME
+              value: "{{ webhook_vol_tls_name }}"
+            - name: WEBHOOK_KEY_FILE_NAME
+              value: "{{ webhook_key_file_name }}"
+            - name: WEBHOOK_CRT_FILE_NAME
+              value: "{{ webhook_crt_file_name }}"
+            - name: REDIS_NODE_POD_HOST_END_PART
+              value: "{{ redis_node_pod_host_end_part }}"
+            - name: REDIS_NODE_MIN_POD_REPLICAS
+              value: "{{ redis_node_min_pod_replicas }}"
+            - name: REDIS_NODE_CLIENT_PORT
+              value: "{{ redis_node_client_port }}"
+            - name: REDIS_NODE_NAME
+              value: "{{ redis_node_name }}"
+            - name: REDIS_NODE_KEY_NAMESPACE
+              value: "{{ redis_node_key_namespace }}"
+            - name: REDIS_NODE_SCALE_DOWN_KEY
+              value: "{{ redis_node_scale_down_key }}"
+            - name: REDIS_NODE_SCALE_DOWN_STATUS__NEED_TO_SCALE_DOWN
+              value: "{{ redis_node_scale_down_status__need_to_scale_down }}"
+            - name: REDIS_NODE_SCALE_DOWN_STATUS__SCALING
+              value: "{{ redis_node_scale_down_status__scaling }}"
+            - name: REDIS_NODE_SCALE_DOWN_STATUS__FINISHED
+              value: "{{ redis_node_scale_down_status__finished }}"

@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ namespace }}
+  name: {{ scaler_name }}
+  labels:
+    app: {{ scaler_label }}
+spec:
+  replicas: {{ scaler_pod_replicas }}
+  selector:
+    matchLabels:
+      app: {{ scaler_label }}
+  template:
+    metadata:
+      name: {{ scaler_name }}
+      labels:
+        app: {{ scaler_label }}
+    spec:
+      volumes:
+        - name: {{ scaler_vol_sh_name }}
+          configMap:
+            name: {{ scaler_cm_sh_name }}
+            defaultMode: 0755
+      restartPolicy: Always
+      containers:
+        - name: {{ scaler_name }}
+          image: {{ scaler_image }}
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "/{{ scaler_vol_sh_name }}/{{ scaler_sh_filename }}"]
+          securityContext:
+            privileged: false
+          volumeMounts:
+            - name: {{ scaler_vol_sh_name }}
+              mountPath: /{{ scaler_vol_sh_name }}
+              readOnly: false
+          env:
+            - name: REDIS_NODE_POD_HOST_END_PART
+              value: "{{ redis_node_pod_host_end_part }}"
+            - name: REDIS_NODE_MIN_POD_REPLICAS
+              value: "{{ redis_node_min_pod_replicas }}"
+            - name: REDIS_NODE_CLIENT_PORT
+              value: "{{ redis_node_client_port }}"
+            - name: REDIS_NODE_NAME
+              value: "{{ redis_node_name }}"
+            - name: REDIS_NODE_KEY_NAMESPACE
+              value: "{{ redis_node_key_namespace }}"
+            - name: REDIS_NODE_SCALE_DOWN_KEY
+              value: "{{ redis_node_scale_down_key }}"
+            - name: REDIS_NODE_KEY_COUNT
+              value: "{{ redis_node_key_count }}"
+            - name: REDIS_NODE_SCALE_DOWN_STATUS__NEED_TO_SCALE_DOWN
+              value: "{{ redis_node_scale_down_status__need_to_scale_down }}"
+            - name: REDIS_NODE_SCALE_DOWN_STATUS__SCALING
+              value: "{{ redis_node_scale_down_status__scaling }}"
+            - name: REDIS_NODE_SCALE_DOWN_STATUS__FINISHED
+              value: "{{ redis_node_scale_down_status__finished }}"

@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ namespace }}
+  name: {{ redis_node_service }}
+  labels:
+    app: {{ redis_node_label }}
+spec:
+  clusterIP: None
+  ports:
+  - name: client
+    port: {{ redis_node_client_port }}
+    targetPort: {{ redis_node_client_port }}
+  - name: gossip
+    port: {{ redis_node_gossip_port }}
+    targetPort: {{ redis_node_gossip_port }}
+  selector:
+    app: {{ redis_node_label }}
