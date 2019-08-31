@@ -245,7 +245,7 @@ init-scaler-cm: init-ns
 		--namespace=${NAMESPACE} \
 		--from-file="scaler/sh/${SCALER_SH_FILENAME}" \
 		--save-config --dry-run -o yaml | \
-		tee last_deploy/Scaler-SH-ConfigMap.yaml | \
+		tee last_deploy/Scaler-ConfigMap.yaml | \
 		kubectl apply -f -
 	@kubectl label cm ${SCALER_CM_SH_NAME} app=${SCALER_LABEL} --overwrite=true
 

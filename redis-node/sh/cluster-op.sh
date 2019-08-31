@@ -167,7 +167,6 @@ else  # part 2
 		do_meet;
 		do_fix;  # try to fix slots, sometimes some slots has a wrong position
 		do_rebalance;
-		do_fix;  # try to fix slots again
 
 	fi
 
